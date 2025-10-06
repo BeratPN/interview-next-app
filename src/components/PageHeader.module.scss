@@ -3,30 +3,35 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  transition: all 0.45s ease; 
 
   h2 {
     font-size: 2rem;
     font-weight: 700;
     color: #111;
+    transition: all 0.45s ease;
   }
 
   .controls {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+    transition: all 0.45s ease;
 
     .searchWrapper {
       display: flex;
       position: relative;
       flex: 1;
+      transition: all 0.45s ease;
 
       input {
         width: 100%;
         padding: 0.5rem 0.75rem;
-        padding-left: 2rem; 
+        padding-left: 2rem;
         border: 2px solid #ccc;
         border-radius: 0.3rem;
         font-size: 0.875rem;
+        transition: all 0.45s ease;
 
         &:focus {
           border-color: #137fec;
@@ -46,25 +51,30 @@
         transform: translateY(-10%);
         color: #888;
         pointer-events: none;
-        width: 24px;
-        height: 24px;
+        width: 1.5rem;
+        height: 1.5rem;
         stroke: gray;
         stroke-width: 2rem;
+        transition: all 0.45s ease;
       }
     }
 
     .sortWrapper {
       position: relative;
-      svg{
+      transition: all 0.45s ease;
+
+      svg {
         position: absolute;
         right: 0.5rem;
         top: 50%;
         transform: translateY(-50%);
         pointer-events: none;
-        width: 24px;
-        height: 24px;
+        width: 1.2rem;
+        height: 1.2rem;
         color: gray;
+        transition: all 0.45s ease;
       }
+
       select {
         padding: 0.5rem 2rem 0.5rem 0.75rem;
         border: 2px solid #ccc;
@@ -80,6 +90,7 @@
         background-size: 1rem 1rem;
         color: gray;
         cursor: pointer;
+        transition: all 0.45s ease;
 
         &:focus {
           border-color: #137fec;
@@ -91,19 +102,74 @@
   }
 }
 
+// Tablet
+@media (max-width: 1024px) {
+  .pageHeader {
+    h2 {
+      font-size: 1.75rem;
+    }
+
+    .controls {
+      gap: 0.4rem;
+
+      .searchWrapper {
+        svg {
+          left: 0.3rem;
+          top: 30%;
+          transform: translateY(-10%);
+          width: 1.1rem;
+          height: 1.1rem;
+          stroke: gray;
+          stroke-width: 2rem;
+        }
+        input {
+          padding-left: 1.75rem;
+          font-size: 0.825rem;
+        }
+      }
+
+      .sortWrapper {
+        svg {
+          right: 0.5rem;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 0.5rem;
+          height: 0.5rem;
+        }
+        select {
+          padding: 0.4rem 1.75rem 0.4rem 0.5rem;
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+}
+
+// Mobile
 @media (max-width: 640px) {
   .pageHeader {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
 
+    h2 {
+      font-size: 1.3rem;
+    }
+
     .controls {
       width: 100%;
-      flex-direction: column;
+      flex-direction: row;
       gap: 0.5rem;
 
-      .sortWrapper select.sort {
+      .searchWrapper input {
+        font-size: 0.8rem;
+        padding-left: 1.5rem;
+      }
+
+      .sortWrapper select {
         width: 100%;
+        font-size: 0.9rem;
+        padding: 0.4rem 1.5rem 0.4rem 0.5rem;
       }
     }
   }

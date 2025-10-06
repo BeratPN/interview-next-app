@@ -2,7 +2,9 @@ import FloatingButton from "@/components/FloatingButton";
 import Header from "../components/Header";
 import PageHeader from "../components/PageHeader";
 import ProductTable from "../components/ProductTable";
+import styles from "./page.module.scss";
 import FloatingButtonWrapper from "@/components/FloatingButtonWrapper";
+
 
 const products = [
   {
@@ -21,14 +23,13 @@ const products = [
     category: "Clothing",
     price: "$80.00",
   },
-
 ];
 
 export default function Home() {
   return (
     <div>
       <Header />
-      <main style={{ padding: "1rem 2rem" }}>
+      <main className={styles.mainContent}>
         <PageHeader />
         <ProductTable products={products} />
         <FloatingButtonWrapper />
