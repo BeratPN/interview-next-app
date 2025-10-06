@@ -1,9 +1,5 @@
-import './globals.scss';
-
-export const metadata = {
-  title: 'Product Management',
-  description: 'Mülakat test uygulaması',
-};
+import { ThemeProvider } from "@/context/ThemeContext";
+import "@/styles/globals.scss";
 
 export default function RootLayout({
   children,
@@ -11,8 +7,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="tr">
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

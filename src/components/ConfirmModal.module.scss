@@ -9,7 +9,7 @@
 }
 
 .modal {
-  background: #fff;
+  background: var(--bg-color);
   padding: 1.5rem;
   border-radius: 0.5rem;
   max-width: 320px;
@@ -19,7 +19,7 @@
 
   p {
     margin-bottom: 1rem;
-    color: #333;
+    color: var(--text-color);
     font-size: 0.95rem;
   }
 }
