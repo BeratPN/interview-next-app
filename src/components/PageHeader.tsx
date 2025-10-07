@@ -1,9 +1,12 @@
+"use client";
+import { useLanguage } from "@/context/LanguageContext";
 import styles from "./PageHeader.module.scss";
 
 export default function PageHeader() {
+  const { lang } = useLanguage();
   return (
     <div className={styles.pageHeader}>
-      <h2>Products</h2>
+      <h2>{lang.products}</h2>
       <div className={styles.controls}>
         <div className={styles.searchWrapper}>
           <svg
@@ -20,7 +23,7 @@ export default function PageHeader() {
               d="M21 21l-4.35-4.35A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z"
             />
           </svg>
-          <input type="text" placeholder="Search" />
+          <input type="text" placeholder={lang.search} />
         </div>
 
         <div className={styles.sortWrapper}>
@@ -47,10 +50,10 @@ export default function PageHeader() {
             </g>
           </svg>
           <select className={styles.sort}>
-            <option>Sort by</option>
-            <option>Name</option>
-            <option>Price</option>
-            <option>Category</option>
+            <option>{lang.sortBy}</option>
+            <option>{lang.name}</option>
+            <option>{lang.price}</option>
+            <option>{lang.category}</option>
           </select>
         </div>
       </div>

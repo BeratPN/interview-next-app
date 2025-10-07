@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import styles from "./ConfirmModal.module.scss";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ export default function ConfirmModal({
   message,
 }: ConfirmModalProps) {
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const { lang } = useLanguage();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -45,7 +47,7 @@ export default function ConfirmModal({
   return (
     <div className={styles.overlay} aria-modal="true" role="dialog">
       <div className={styles.modal} ref={modalRef}>
-        <p>{message || "Bu öğeyi silmek istediğinizden emin misiniz?"}</p>
+        <p>{message || lang.confirmDelete }</p>
         <div className={styles.buttons}>
           <button
             type="button"
@@ -56,7 +58,7 @@ export default function ConfirmModal({
               onClose();
             }}
           >
-            Vazgeç
+            {lang.cancel}
           </button>
           <button
             type="button"
@@ -67,7 +69,7 @@ export default function ConfirmModal({
               onConfirm();
             }}
           >
-            Evet, Sil
+            {lang.confirm}
           </button>
         </div>
       </div>

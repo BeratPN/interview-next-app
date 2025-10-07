@@ -1,0 +1,19 @@
+{
+  "greeting": "Merhaba",
+  "dashboard": "Yönetim Paneli",
+  "products": "Ürünler",
+  "search": "Ara",
+  "delete": "Sil",
+  "edit": "Düzenle",
+  "confirmDelete": "Bu öğeyi silmek istediğinizden emin misiniz?",
+  "cancel": "İptal",
+  "confirm": "Onayla",
+  "sortBy": "Sırala",
+  "name": "İsim",
+  "price": "Fiyat",
+  "category": "Kategori",
+  "image": "Resim",
+  "product": "Ürün",
+  "actions": "İşlemler"
+
+}

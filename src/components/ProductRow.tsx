@@ -3,6 +3,7 @@
 import { useState } from "react";
 import styles from "./ProductRow.module.scss";
 import ConfirmModal from "@/components/ConfirmModal";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface ProductRowProps {
   image: string;
@@ -21,6 +22,7 @@ export default function ProductRow({
 }: ProductRowProps) {
   const [isModalOpen, setModalOpen] = useState(false);
   const categoryClass = styles[category.toLowerCase()] || "";
+  const { lang } = useLanguage();
 
   const handleDelete = () => setModalOpen(true);
   const handleConfirmDelete = () => {
@@ -43,7 +45,7 @@ export default function ProductRow({
       <td>{price}</td>
       <td>
         <a className={styles.edit} href="#">
-          Düzenle
+          {lang.edit}
         </a>
         <span className={styles.separator}>|</span>
         <a
@@ -54,12 +56,12 @@ export default function ProductRow({
             handleDelete();
           }}
         >
-          Sil
+          {lang.delete}
           <ConfirmModal
             isOpen={isModalOpen}
             onClose={() => setModalOpen(false)}
             onConfirm={handleConfirmDelete}
-            message={`"${name}" ürününü silmek istediğinizden emin misiniz?`}
+            message={`"${name}" ${lang.confirmDelete}`}
           />
         </a>
       </td>

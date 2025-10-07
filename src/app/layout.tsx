@@ -1,3 +1,4 @@
+import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import "@/styles/globals.scss";
 
@@ -9,7 +10,9 @@ export default function RootLayout({
   return (
     <html lang="tr">
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
