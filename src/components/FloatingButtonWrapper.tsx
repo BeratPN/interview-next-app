@@ -2,7 +2,14 @@
 
 
 import FloatingButton from './FloatingButton';
+import { useRouter } from 'next/navigation';
 
 export default function FloatingButtonWrapper() {
-  return <FloatingButton onClick={() => alert('Clicked!')}>+</FloatingButton>;
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push('/add-product'); 
+  }
+
+  return <FloatingButton onClick={handleClick}>+</FloatingButton>;
 }

@@ -28,7 +28,6 @@ const products = [
 export default function Home() {
   return (
     <div>
-      <Header />
       <main className={styles.mainContent}>
         <PageHeader />
         <ProductTable products={products} />

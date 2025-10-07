@@ -1,3 +1,4 @@
+import Header from "@/components/Header";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import "@/styles/globals.scss";
@@ -11,7 +12,10 @@ export default function RootLayout({
     <html lang="tr">
       <body>
         <ThemeProvider>
-          <LanguageProvider>{children}</LanguageProvider>
+          <LanguageProvider>
+            <Header />
+            {children}
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

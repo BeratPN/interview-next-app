@@ -2,15 +2,16 @@
 import { useTheme } from "@/context/ThemeContext";
 import styles from "./Header.module.scss";
 import { useLanguage } from "@/context/LanguageContext";
-
+import { useRouter } from "next/navigation";
 export default function Header() {
   const { language, setLanguage, lang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+   const router = useRouter();
 
   return (
     <header className={styles.header}>
       <div className={styles.logoTitle}>
-        <h1>{lang.dashboard}</h1>
+        <h1 onClick={() => router.push("/")}>{lang.dashboard}</h1>
       </div>
       <div className={styles.rightSection}>
         <div>{lang.greeting}, ADMIN</div>
