@@ -50,5 +50,8 @@
   "page": "Sayfa",
   "of": "toplam",
   "showing": "Gösterilen",
-  "results": "sonuç"
+  "results": "sonuç",
+  "loading": "Yükleniyor...",
+  "productNotFound": "Ürün bulunamadı",
+  "editProduct": "Ürünü Düzenle"
 }

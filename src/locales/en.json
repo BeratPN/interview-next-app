@@ -49,5 +49,8 @@
   "page": "Page",
   "of": "of",
   "showing": "Showing",
-  "results": "results"
+  "results": "results",
+  "loading": "Loading...",
+  "productNotFound": "Product not found",
+  "editProduct": "Edit Product"
 }

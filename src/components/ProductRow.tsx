@@ -22,7 +22,13 @@ export default function ProductRow({
   onDelete,
 }: ProductRowProps) {
   const [isModalOpen, setModalOpen] = useState(false);
-  const categoryClass = styles[category?.toLowerCase?.()] || "";
+  const getCategoryClass = (category: string) => {
+    const normalizedCategory = category
+      .toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '');
+    return styles[normalizedCategory] || "";
+  };
   const { lang } = useLanguage();
 
   const openModal = (e?: React.MouseEvent) => {
@@ -47,9 +53,9 @@ export default function ProductRow({
       </td>
       <td>{name}</td>
       <td>
-        <span className={`${styles.category} ${categoryClass}`}>{category}</span>
+        <span className={`${styles.category} ${getCategoryClass(category)}`}>{category}</span>
       </td>
-      <td>${price.toFixed(2)}</td>
+      <td>${price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
       <td>
         <a className={styles.edit} href={`/edit/${id}`}>
           {lang.edit}

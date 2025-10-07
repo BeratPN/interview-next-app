@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import trJson from '@/locales/tr.json';
 import enJson from '@/locales/en.json';
 
@@ -21,8 +21,22 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>('tr');
   const lang = language === 'tr' ? tr : en;
 
+  const handleSetLanguage = (newLanguage: Language) => {
+    setLanguage(newLanguage);
+    localStorage.setItem('language', newLanguage);
+    document.documentElement.lang = newLanguage;
+  };
+
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') as Language;
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+      document.documentElement.lang = savedLanguage;
+    }
+  }, []);
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage,lang }}>
+    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, lang }}>
       {children}
     </LanguageContext.Provider>
   );

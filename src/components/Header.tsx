@@ -14,9 +14,12 @@ export default function Header() {
         <h1 onClick={() => router.push("/")}>{lang.dashboard}</h1>
       </div>
       <div className={styles.rightSection}>
-        <div>{lang.greeting}, ADMIN</div>
-        <button onClick={toggleTheme}>{theme === "light" ? "🌙" : "☀️"}</button>
+        <div className={styles.greeting}>{lang.greeting}, ADMIN</div>
+        <button className={styles.themeToggle} onClick={toggleTheme}>
+          {theme === "light" ? "🌙" : "☀️"}
+        </button>
         <select
+          className={styles.languageSelect}
           value={language}
           onChange={(e) => setLanguage(e.target.value as "tr" | "en")}
         >
