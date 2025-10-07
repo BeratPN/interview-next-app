@@ -22,6 +22,7 @@
   "productCategoryError": "Kategori gerekli",
   "productImageError": "Geçerli bir resim URL'si gerekli",
   "productSaved": "Ürün başarıyla kaydedildi",
+  "productUpdated": "Ürün başarıyla güncellendi",
 
   "failedToUploadImage": "Resim yüklenemedi",
   "productName": "Ürün Adı",

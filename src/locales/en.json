@@ -23,6 +23,7 @@
   "productImageError": "A valid image URL is required",
   "failedToUploadImage": "Failed to upload image",
   "productSaved": "Product saved successfully",
+  "productUpdated": "Product updated successfully",
   "productName": "Product Name",
   "productNamePlaceholder": "e.g., Modern Chair",
   "productPrice": "Product Price",

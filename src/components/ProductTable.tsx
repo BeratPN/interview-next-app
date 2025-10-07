@@ -8,7 +8,7 @@ interface Product {
   image: string;
   name: string;
   category: string;
-  price: string;
+  price: number;
 }
 
 interface ProductTableProps {
@@ -32,6 +32,7 @@ export default function ProductTable({ products }: ProductTableProps) {
           {products.map((p) => (
             <ProductRow
               key={p.id}
+              id={p.id}
               image={p.image}
               name={p.name}
               category={p.category}

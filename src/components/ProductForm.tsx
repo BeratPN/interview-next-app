@@ -9,7 +9,7 @@ export interface Product {
   id?: string | number;
   name: string;
   category: string;
-  price: string;
+  price: number;
   description?: string;
   image?: string;
 }
@@ -33,21 +33,22 @@ export default function ProductForm({
   onSuccess,
   onCancel,
 }: ProductFormProps) {
+  const { lang } = useLanguage();
+  const router = useRouter();
+
   const [form, setForm] = useState<Product>({
     name: "",
     category: categories[0] || "",
-    price: "",
+    price: 0,
     description: "",
     image: "",
     ...initialData,
   });
-  const { lang } = useLanguage();
 
-  const router = useRouter();
-  const handleCancel = () => {
-    onCancel?.();
-    router.push("/");
-  };
+  // ayrı bir string state input için
+  const [priceInput, setPriceInput] = useState<string>(
+    initialData?.price?.toString() || ""
+  );
 
   const [file, setFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(
@@ -60,6 +61,7 @@ export default function ProductForm({
   useEffect(() => {
     if (initialData) {
       setForm((s) => ({ ...s, ...initialData }));
+      setPriceInput(initialData.price.toString());
       setImagePreview(initialData.image ?? null);
     }
   }, [initialData]);
@@ -94,9 +96,10 @@ export default function ProductForm({
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.name?.trim()) errs.name = lang.productNameError;
-    const priceNum = Number(String(form.price).replace(",", "."));
-    if (!form.price || Number.isNaN(priceNum) || priceNum <= 0)
+
+    if (form.price <= 0 || Number.isNaN(form.price))
       errs.price = lang.productPriceError;
+
     if (!form.category) errs.category = lang.productCategoryError;
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -132,37 +135,57 @@ export default function ProductForm({
 
       const productData: Product = { ...form, image: uploadedUrl };
 
-      // Ürünleri JSON'a kaydet
-      await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productData),
-      });
+      if (mode === "edit" && initialData?.id) {
+        // Güncelleme işlemi
+        await fetch(`/api/products/${initialData.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
+        });
+      } else {
+        // Yeni ürün ekleme
+        await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
+        });
+      }
 
       setForm({
         name: "",
         category: categories[0] || "",
-        price: "",
+        price: 0,
         description: "",
         image: "",
       });
+      setPriceInput("");
       setFile(null);
       setImagePreview(null);
       onSuccess?.(productData);
-      alert(lang.productSaved);
+      mode === "edit" ? alert(lang.productUpdated) : alert(lang.productSaved);
       router.push("/");
     } catch (err: any) {
       alert("Hata: " + err.message);
     } finally {
       setLoading(false);
+      setTimeout(() => router.push("/"), 100); // hala yönlendirme yapmazsa diye
     }
   };
 
   const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (/^[0-9]*[.,]?[0-9]*$/.test(value) || value === "") {
-      setField("price", value);
+    let value = e.target.value;
+    value = value.replace(",", ".");
+
+    // sadece geçerli float formatına izin ver
+    if (/^\d*\.?\d*$/.test(value) || value === "") {
+      setPriceInput(value);
+      setField("price", value === "" ? 0 : parseFloat(value)); // number olarak kaydet
     }
+  };
+
+  const handleCancel = () => {
+    onCancel?.();
+    router.push("/");
   };
 
   return (
@@ -202,7 +225,7 @@ export default function ProductForm({
               type="text"
               className={styles.input}
               placeholder={lang.productPricePlaceholder}
-              value={form.price}
+              value={priceInput}
               onChange={handlePriceInput}
               aria-invalid={!!errors.price}
               aria-describedby={errors.price ? "error-price" : undefined}
@@ -323,11 +346,7 @@ export default function ProductForm({
             {lang.cancel}
           </button>
           <button type="submit" className={styles.save} disabled={loading}>
-            {loading
-              ? lang.saving
-              : mode === "add"
-              ? lang.save
-              : lang.update}
+            {loading ? lang.saving : mode === "add" ? lang.save : lang.update}
           </button>
         </div>
       </form>

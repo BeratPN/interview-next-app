@@ -6,14 +6,16 @@ import ConfirmModal from "@/components/ConfirmModal";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface ProductRowProps {
+  id: number;
   image: string;
   name: string;
   category: string;
-  price: string;
+  price: number;
   onDelete?: () => void;
 }
 
 export default function ProductRow({
+  id,
   image,
   name,
   category,
@@ -34,7 +36,11 @@ export default function ProductRow({
   return (
     <tr className={styles.row}>
       <td>
-        <img className={styles.image} src={image} alt={name} />
+        {image ? (
+          <img className={styles.image} src={image} alt={name} />
+        ) : (
+          <div className={styles.noImage}>No Image</div> 
+        )}
       </td>
       <td>{name}</td>
       <td>
@@ -42,9 +48,9 @@ export default function ProductRow({
           {category}
         </span>
       </td>
-      <td>{price}</td>
+      <td>${price.toFixed(2)}</td>
       <td>
-        <a className={styles.edit} href="#">
+        <a className={styles.edit} href={`/edit/${id}`}>
           {lang.edit}
         </a>
         <span className={styles.separator}>|</span>
