@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import "@/styles/globals.scss";
@@ -13,8 +14,10 @@ export default function RootLayout({
       <body suppressHydrationWarning={true}>
         <ThemeProvider>
           <LanguageProvider>
-            <Header />
-            {children}
+            <ErrorBoundary>
+              <Header />
+              {children}
+            </ErrorBoundary>
           </LanguageProvider>
         </ThemeProvider>
       </body>

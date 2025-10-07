@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./ProductForm.module.scss";
 import { useLanguage } from "@/context/LanguageContext";
+import { ApiErrorHandler, showErrorToast } from "@/utils/errorHandler";
 
 export interface Product {
   id?: string | number;
@@ -12,6 +13,10 @@ export interface Product {
   price: number;
   description?: string;
   image?: string;
+  brand: string;
+  model: string;
+  color: string;
+  stock: number;
 }
 
 type Mode = "add" | "edit";
@@ -42,12 +47,19 @@ export default function ProductForm({
     price: 0,
     description: "",
     image: "",
+    brand: "",
+    model: "",
+    color: "",
+    stock: 0,
     ...initialData,
   });
 
   // ayrı bir string state input için
   const [priceInput, setPriceInput] = useState<string>(
     initialData?.price?.toString() || ""
+  );
+  const [stockInput, setStockInput] = useState<string>(
+    initialData?.stock?.toString() || ""
   );
 
   const [file, setFile] = useState<File | null>(null);
@@ -62,6 +74,7 @@ export default function ProductForm({
     if (initialData) {
       setForm((s) => ({ ...s, ...initialData }));
       setPriceInput(initialData.price.toString());
+      setStockInput(initialData.stock.toString());
       setImagePreview(initialData.image ?? null);
     }
   }, [initialData]);
@@ -95,12 +108,26 @@ export default function ProductForm({
 
   const validate = () => {
     const errs: Record<string, string> = {};
+    
+    // Temel alanlar
     if (!form.name?.trim()) errs.name = lang.productNameError;
-
-    if (form.price <= 0 || Number.isNaN(form.price))
-      errs.price = lang.productPriceError;
-
+    if (form.price <= 0 || Number.isNaN(form.price)) errs.price = lang.productPriceError;
     if (!form.category) errs.category = lang.productCategoryError;
+    
+    // Yeni alanlar
+    if (!form.brand?.trim()) errs.brand = lang.brandError;
+    if (!form.model?.trim()) errs.model = lang.modelError;
+    if (!form.color?.trim()) errs.color = lang.colorError;
+    
+    // Stok validasyonu
+    if (Number.isNaN(form.stock) || form.stock < 0) {
+      errs.stock = lang.stockError;
+    } else if (form.stock === 0) {
+      errs.stock = lang.stockMinError;
+    } else if (form.stock > 999999) {
+      errs.stock = lang.stockMaxError;
+    }
+    
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -137,16 +164,14 @@ export default function ProductForm({
 
       if (mode === "edit" && initialData?.id) {
         // Güncelleme işlemi
-        await fetch(`/api/products/${initialData.id}`, {
+        await ApiErrorHandler.handleFetch(`/api/products/${initialData.id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(productData),
         });
       } else {
         // Yeni ürün ekleme
-        await fetch("/api/products", {
+        await ApiErrorHandler.handleFetch("/api/products", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(productData),
         });
       }
@@ -157,15 +182,21 @@ export default function ProductForm({
         price: 0,
         description: "",
         image: "",
+        brand: "",
+        model: "",
+        color: "",
+        stock: 0,
       });
       setPriceInput("");
+      setStockInput("");
       setFile(null);
       setImagePreview(null);
       onSuccess?.(productData);
       mode === "edit" ? alert(lang.productUpdated) : alert(lang.productSaved);
       router.push("/");
     } catch (err: any) {
-      alert("Hata: " + err.message);
+      console.error("Form error:", err);
+      showErrorToast(err, lang);
     } finally {
       setLoading(false);
       setTimeout(() => router.push("/"), 100); // hala yönlendirme yapmazsa diye
@@ -180,6 +211,16 @@ export default function ProductForm({
     if (/^\d*\.?\d*$/.test(value) || value === "") {
       setPriceInput(value);
       setField("price", value === "" ? 0 : parseFloat(value)); // number olarak kaydet
+    }
+  };
+
+  const handleStockInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+
+    // sadece geçerli integer formatına izin ver
+    if (/^\d*$/.test(value) || value === "") {
+      setStockInput(value);
+      setField("stock", value === "" ? 0 : parseInt(value)); // number olarak kaydet
     }
   };
 
@@ -216,8 +257,57 @@ export default function ProductForm({
           </div>
 
           <div className={styles.field}>
+            <label className={styles.label} htmlFor="brand">
+              {lang.brand}
+              <span className={styles.required}>*</span>
+            </label>
+            <input
+              id="brand"
+              name="brand"
+              type="text"
+              className={styles.input}
+              placeholder={lang.brandPlaceholder}
+              value={form.brand}
+              onChange={(e) => setField("brand", e.target.value)}
+              aria-invalid={!!errors.brand}
+              aria-describedby={errors.brand ? "error-brand" : undefined}
+            />
+            {errors.brand && (
+              <div id="error-brand" className={styles.error}>
+                {errors.brand}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.grid}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="model">
+              {lang.model}
+              <span className={styles.required}>*</span>
+            </label>
+            <input
+              id="model"
+              name="model"
+              type="text"
+              className={styles.input}
+              placeholder={lang.modelPlaceholder}
+              value={form.model}
+              onChange={(e) => setField("model", e.target.value)}
+              aria-invalid={!!errors.model}
+              aria-describedby={errors.model ? "error-model" : undefined}
+            />
+            {errors.model && (
+              <div id="error-model" className={styles.error}>
+                {errors.model}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.field}>
             <label className={styles.label} htmlFor="price">
               {lang.productPrice}
+              <span className={styles.required}>*</span>
             </label>
             <input
               id="price"
@@ -233,6 +323,54 @@ export default function ProductForm({
             {errors.price && (
               <div id="error-price" className={styles.error}>
                 {errors.price}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className={styles.grid}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="color">
+              {lang.color}
+              <span className={styles.required}>*</span>
+            </label>
+            <input
+              id="color"
+              name="color"
+              type="text"
+              className={styles.input}
+              placeholder={lang.colorPlaceholder}
+              value={form.color}
+              onChange={(e) => setField("color", e.target.value)}
+              aria-invalid={!!errors.color}
+              aria-describedby={errors.color ? "error-color" : undefined}
+            />
+            {errors.color && (
+              <div id="error-color" className={styles.error}>
+                {errors.color}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="stock">
+              {lang.stock}
+              <span className={styles.required}>*</span>
+            </label>
+            <input
+              id="stock"
+              name="stock"
+              type="text"
+              className={styles.input}
+              placeholder={lang.stockPlaceholder}
+              value={stockInput}
+              onChange={handleStockInput}
+              aria-invalid={!!errors.stock}
+              aria-describedby={errors.stock ? "error-stock" : undefined}
+            />
+            {errors.stock && (
+              <div id="error-stock" className={styles.error}>
+                {errors.stock}
               </div>
             )}
           </div>

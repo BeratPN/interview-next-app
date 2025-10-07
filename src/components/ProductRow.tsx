@@ -10,6 +10,10 @@ interface ProductRowProps {
   name: string;
   category: string;
   price: number;
+  brand?: string;
+  model?: string;
+  color?: string;
+  stock?: number;
   onDelete?: () => void; // parent'e haber ver
 }
 
@@ -19,6 +23,10 @@ export default function ProductRow({
   name,
   category,
   price,
+  brand,
+  model,
+  color,
+  stock,
   onDelete,
 }: ProductRowProps) {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -52,10 +60,16 @@ export default function ProductRow({
         )}
       </td>
       <td>{name}</td>
+      <td>{brand || '-'}</td>
+      <td>{model || '-'}</td>
+      <td>{color || '-'}</td>
       <td>
         <span className={`${styles.category} ${getCategoryClass(category)}`}>{category}</span>
       </td>
       <td>${price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      <td>
+        <span className={styles.stock}>{stock || 0}</span>
+      </td>
       <td>
         <a className={styles.edit} href={`/edit/${id}`}>
           {lang.edit}

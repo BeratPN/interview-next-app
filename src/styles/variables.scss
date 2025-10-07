@@ -13,6 +13,10 @@
   --option-bg-hover: rgba(19, 127, 236, 0.15);
   --option-shadow: rgba(0, 0, 0, 0.1);
   --option-shadow-hover: rgba(19, 127, 236, 0.2);
+  --pagination-bg: #fff;
+  --pagination-bg-hover: #f3f4f6;
+  --pagination-border: #d1d5db;
+  --pagination-text: #374151;
 }
 
 [data-theme="dark"] {
@@ -30,4 +34,8 @@
   --option-bg-hover: rgba(19, 127, 236, 0.25);
   --option-shadow: rgba(0, 0, 0, 0.3);
   --option-shadow-hover: rgba(19, 127, 236, 0.3);
+  --pagination-bg: #1F2937;
+  --pagination-bg-hover: #374151;
+  --pagination-border: #4a5462;
+  --pagination-text: #f5f5f5;
 }

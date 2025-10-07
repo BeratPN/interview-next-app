@@ -3,6 +3,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import ProductRow from "./ProductRow";
 import Pagination from "./Pagination";
+import { ApiErrorHandler, showErrorToast } from "@/utils/errorHandler";
 import styles from "./ProductTable.module.scss";
 
 interface Product {
@@ -11,6 +12,10 @@ interface Product {
   name: string;
   category: string;
   price: number;
+  brand?: string;
+  model?: string;
+  color?: string;
+  stock?: number;
 }
 
 interface ProductTableProps {
@@ -42,19 +47,15 @@ export default function ProductTable({
 
   const handleDelete = async (id: number) => {
     try {
-      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        const msg = data?.error || `Silme başarısız (status ${res.status})`;
-        throw new Error(msg);
-      }
+      await ApiErrorHandler.handleFetch(`/api/products/${id}`, { 
+        method: "DELETE" 
+      });
 
       // Sayfayı yenile
       window.location.reload();
     } catch (err: any) {
-      alert("Hata: " + (err?.message || "Silme işlemi başarısız"));
       console.error("Delete error:", err);
+      showErrorToast(err, lang);
     }
   };
 
@@ -77,8 +78,12 @@ export default function ProductTable({
               <tr>
                 <th>{lang.image}</th>
                 <th>{lang.product}</th>
+                <th>{lang.brand}</th>
+                <th>{lang.model}</th>
+                <th>{lang.color}</th>
                 <th>{lang.category}</th>
                 <th>{lang.price}</th>
+                <th>{lang.stock}</th>
                 <th>{lang.actions}</th>
               </tr>
             </thead>
@@ -91,6 +96,10 @@ export default function ProductTable({
                   name={p.name}
                   category={p.category}
                   price={p.price}
+                  brand={p.brand}
+                  model={p.model}
+                  color={p.color}
+                  stock={p.stock}
                   onDelete={() => handleDelete(p.id)} 
                 />
               ))}
