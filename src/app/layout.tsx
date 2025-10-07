@@ -10,7 +10,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr">
-      <body>
+      <body suppressHydrationWarning={true}>
         <ThemeProvider>
           <LanguageProvider>
             <Header />

@@ -1,37 +1,74 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import styles from "./PageHeader.module.scss";
 
 interface PageHeaderProps {
-  onSearchChange: (searchTerm: string) => void;
-  onSortChange: (sortBy: string, sortOrder: string) => void;
+  searchTerm?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }
 
-export default function PageHeader({ onSearchChange, onSortChange }: PageHeaderProps) {
+export default function PageHeader({ 
+  searchTerm = "", 
+  sortBy = "", 
+  sortOrder = "asc" 
+}: PageHeaderProps) {
   const { lang } = useLanguage();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const updateURL = useCallback((params: Record<string, string>) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) {
+        newSearchParams.set(key, value);
+      } else {
+        newSearchParams.delete(key);
+      }
+    });
+    
+    newSearchParams.set('page', '1');
+    router.push(`/?${newSearchParams.toString()}`);
+  }, [searchParams, router]);
+
+  // Sync local state with URL params
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+
+  // Debounced search
+  useEffect(() => {
+    if (localSearchTerm !== searchTerm) {
+      setIsSearching(true);
+    }
+
+    const timer = setTimeout(() => {
+      if (localSearchTerm !== searchTerm) {
+        updateURL({ search: localSearchTerm });
+        setIsSearching(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearchTerm, searchTerm, updateURL]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchTerm(value);
-    onSearchChange(value);
+    setLocalSearchTerm(e.target.value);
   };
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSortBy(value);
-    onSortChange(value, sortOrder);
+    updateURL({ sortBy: value, sortOrder });
   };
 
   const handleSortOrderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    setSortOrder(value);
-    if (sortBy) {
-      onSortChange(sortBy, value);
-    }
+    updateURL({ sortBy, sortOrder: value });
   };
 
   return (
@@ -39,24 +76,28 @@ export default function PageHeader({ onSearchChange, onSortChange }: PageHeaderP
       <h2>{lang.products}</h2>
       <div className={styles.controls}>
         <div className={styles.searchWrapper}>
-          <svg
-            className="searchIcon"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1}
-              d="M21 21l-4.35-4.35A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z"
-            />
-          </svg>
+          {isSearching ? (
+            <div className={styles.loadingSpinner}></div>
+          ) : (
+            <svg
+              className="searchIcon"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1}
+                d="M21 21l-4.35-4.35A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z"
+              />
+            </svg>
+          )}
           <input 
             type="text" 
             placeholder={lang.search}
-            value={searchTerm}
+            value={localSearchTerm}
             onChange={handleSearchChange}
           />
         </div>

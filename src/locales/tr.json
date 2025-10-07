@@ -44,5 +44,11 @@
   "sortByCategory": "Kategoriye Göre",
   "sortAscending": "Artan",
   "sortDescending": "Azalan",
-  "noProducts": "Ürün bulunamadı"
+  "noProducts": "Ürün bulunamadı",
+  "previous": "Önceki",
+  "next": "Sonraki",
+  "page": "Sayfa",
+  "of": "toplam",
+  "showing": "Gösterilen",
+  "results": "sonuç"
 }

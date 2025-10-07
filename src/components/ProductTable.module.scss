@@ -18,6 +18,19 @@
       margin: 0;
     }
   }
+
+  .tableInfo {
+    padding: 1rem;
+    background-color: var(--secondary-bg);
+    border-bottom: 1px solid var(--border-color);
+    
+    p {
+      margin: 0;
+      color: var(--text-color);
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+  }
 }
 
 .table {

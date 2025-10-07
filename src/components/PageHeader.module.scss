@@ -59,6 +59,25 @@
         stroke-width: 2rem;
         transition: all 0.45s ease;
       }
+
+      .loadingSpinner {
+        position: absolute;
+        left: 0.2rem;
+        top: 25%;
+        transform: translateY(-10%);
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #137fec;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        pointer-events: none;
+      }
+
+      @keyframes spin {
+        0% { transform: translateY(-10%) rotate(0deg); }
+        100% { transform: translateY(-10%) rotate(360deg); }
+      }
     }
 
     .sortWrapper {

@@ -43,5 +43,11 @@
   "sortByCategory": "Sort by Category",
   "sortAscending": "Ascending",
   "sortDescending": "Descending",
-  "noProducts": "No products found"
+  "noProducts": "No products found",
+  "previous": "Previous",
+  "next": "Next",
+  "page": "Page",
+  "of": "of",
+  "showing": "Showing",
+  "results": "results"
 }

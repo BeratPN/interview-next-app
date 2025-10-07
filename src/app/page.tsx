@@ -1,37 +1,67 @@
-"use client";
-import { useState } from "react";
 import PageHeader from "../components/PageHeader";
 import ProductTable from "../components/ProductTable";
 import FloatingButtonWrapper from "@/components/FloatingButtonWrapper";
 import styles from "./page.module.scss";
-import productsData from "../../data/products.json";
 
-export default function Home() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
+interface SearchParams {
+  page?: string;
+  search?: string;
+  sortBy?: string;
+  sortOrder?: string;
+}
 
-  const handleSearchChange = (term: string) => {
-    setSearchTerm(term);
-  };
+interface HomeProps {
+  searchParams: SearchParams;
+}
 
-  const handleSortChange = (by: string, order: string) => {
-    setSortBy(by);
-    setSortOrder(order);
-  };
+async function getProducts(searchParams: SearchParams) {
+  const params = new URLSearchParams();
+  
+  if (searchParams.page) params.append('page', searchParams.page);
+  if (searchParams.search) params.append('search', searchParams.search);
+  if (searchParams.sortBy) params.append('sortBy', searchParams.sortBy);
+  if (searchParams.sortOrder) params.append('sortOrder', searchParams.sortOrder);
+  
+  params.append('limit', '10');
+
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/products?${params.toString()}`, {
+    cache: 'no-store'
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch products');
+  }
+
+  return response.json();
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const resolvedSearchParams = await searchParams;
+  const {
+    page = '1',
+    search = '',
+    sortBy = '',
+    sortOrder = 'asc'
+  } = resolvedSearchParams;
+
+  const data = await getProducts({ page, search, sortBy, sortOrder });
 
   return (
     <div>
       <main className={styles.mainContent}>
         <PageHeader 
-          onSearchChange={handleSearchChange}
-          onSortChange={handleSortChange}
-        />
-        <ProductTable 
-          products={productsData}
-          searchTerm={searchTerm}
+          searchTerm={search}
           sortBy={sortBy}
           sortOrder={sortOrder}
+        />
+        <ProductTable 
+          products={data.products}
+          totalPages={data.totalPages}
+          currentPage={data.currentPage}
+          totalProducts={data.totalProducts}
+          hasNextPage={data.hasNextPage}
+          hasPrevPage={data.hasPrevPage}
         />
         <FloatingButtonWrapper />
       </main>
