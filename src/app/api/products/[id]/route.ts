@@ -1,39 +1,62 @@
 // app/api/products/[id]/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
 const dataFile = path.join(process.cwd(), "data", "products.json");
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+function readProducts() {
+  if (!fs.existsSync(dataFile)) return [];
+  const txt = fs.readFileSync(dataFile, "utf-8");
   try {
-    const products = JSON.parse(fs.readFileSync(dataFile, "utf-8"));
-    const product = products.find((p: any) => String(p.id) === params.id);
-    if (!product) return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
-    return NextResponse.json(product);
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Dosya okunamadı" }, { status: 500 });
+    return JSON.parse(txt);
+  } catch (e) {
+    console.error("products.json parse error:", e);
+    return [];
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+function writeProducts(products: any[]) {
+  fs.writeFileSync(dataFile, JSON.stringify(products, null, 2), "utf-8");
+}
+
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  const id = params.id;
+  const products = readProducts();
+  const p = products.find((x: any) => String(x.id) === String(id));
+  if (!p) return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
+  return NextResponse.json(p);
+}
+
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
-    const products = JSON.parse(fs.readFileSync(dataFile, "utf-8"));
-    const productIndex = products.findIndex((p: any) => String(p.id) === params.id);
-
-    if (productIndex === -1)
-      return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
-
+    const id = params.id;
     const body = await req.json();
-    const updatedProduct = { ...products[productIndex], ...body };
-    products[productIndex] = updatedProduct;
-
-    fs.writeFileSync(dataFile, JSON.stringify(products, null, 2), "utf-8");
-
-    return NextResponse.json(updatedProduct);
-  } catch (err) {
+    const products = readProducts();
+    const idx = products.findIndex((x: any) => String(x.id) === String(id));
+    if (idx === -1) return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
+    products[idx] = { ...products[idx], ...body, id: products[idx].id }; // id korunur
+    writeProducts(products);
+    return NextResponse.json(products[idx]);
+  } catch (err: any) {
     console.error(err);
-    return NextResponse.json({ error: "Güncelleme başarısız" }, { status: 500 });
+    return NextResponse.json({ error: err.message || "Güncelleme hatası" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const id = params.id;
+    const products = readProducts();
+    const idx = products.findIndex((x: any) => String(x.id) === String(id));
+    if (idx === -1) {
+      return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
+    }
+    const removed = products.splice(idx, 1);
+    writeProducts(products);
+    return NextResponse.json({ success: true, removed: removed[0] });
+  } catch (err: any) {
+    console.error("DELETE error:", err);
+    return NextResponse.json({ error: err.message || "Silme hatası" }, { status: 500 });
   }
 }

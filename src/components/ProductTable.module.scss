@@ -3,6 +3,21 @@
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   background-color: #fff;
+
+  .noProducts {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    
+    p {
+      color: var(--text-color);
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin: 0;
+    }
+  }
 }
 
 .table {

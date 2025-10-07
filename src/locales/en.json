@@ -37,5 +37,11 @@
   "remove": "Remove",
   "saving": "Saving...",
   "save": "Save",
-  "update": "Update"
+  "update": "Update",
+  "sortByName": "Sort by Name",
+  "sortByPrice": "Sort by Price",
+  "sortByCategory": "Sort by Category",
+  "sortAscending": "Ascending",
+  "sortDescending": "Descending",
+  "noProducts": "No products found"
 }

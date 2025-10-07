@@ -38,5 +38,11 @@
   "remove": "Kaldır",
   "saving": "Kaydediliyor...",
   "save": "Kaydet",
-  "update": "Güncelle"
+  "update": "Güncelle",
+  "sortByName": "İsme Göre",
+  "sortByPrice": "Fiyata Göre",
+  "sortByCategory": "Kategoriye Göre",
+  "sortAscending": "Artan",
+  "sortDescending": "Azalan",
+  "noProducts": "Ürün bulunamadı"
 }
