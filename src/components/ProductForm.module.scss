@@ -4,6 +4,14 @@
   margin: 0 auto;
   padding: 0.25rem;
   font-family: "Inter", sans-serif;
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0.25rem;
+  font-family: "Inter", sans-serif;
 
   .form {
     background: var(--bg-color);
@@ -145,5 +153,187 @@
         box-shadow: 0 6px 18px rgba(19, 127, 236, 0.14);
       }
     }
+  }
+}
+
+// Eksik class'lar
+.required {
+  color: #dc2626;
+  margin-left: 0.25rem;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: none;
+
+  &.show {
+    display: block;
+  }
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #137fec;
+  }
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-size: 1rem;
+  min-height: 100px;
+  resize: vertical;
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #137fec;
+  }
+}
+
+.upload {
+  margin-top: 1rem;
+}
+
+.uploadLabel {
+  display: block;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+.uploadInner {
+  border: 2px dashed var(--border-color);
+  border-radius: 0.75rem;
+  padding: 2rem;
+  text-align: center;
+  transition: border-color 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    border-color: #137fec;
+  }
+}
+
+.svgWrap {
+  margin-bottom: 1rem;
+}
+
+.uploadSvg {
+  width: 48px;
+  height: 48px;
+  color: var(--text-color);
+}
+
+.uploadText {
+  margin-bottom: 1rem;
+}
+
+.uploadButton {
+  background: #137fec;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.small {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.previewImg {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.remove {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.cancel {
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.save {
+  background: #137fec;
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(19, 127, 236, 0.14);
+  transition: background-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #0d6efd;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }

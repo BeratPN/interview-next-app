@@ -2,13 +2,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
+import { PageHeaderProps } from "@/types";
+import { debounce, buildSearchParams } from "@/utils";
+import { SORT_OPTIONS, SORT_ORDERS } from "@/constants";
 import styles from "./PageHeader.module.scss";
-
-interface PageHeaderProps {
-  searchTerm?: string;
-  sortBy?: string;
-  sortOrder?: string;
-}
 
 export default function PageHeader({ 
   searchTerm = "", 
@@ -41,21 +38,23 @@ export default function PageHeader({
     setLocalSearchTerm(searchTerm);
   }, [searchTerm]);
 
-  // Debounced search
+  // Debounced search with custom debounce utility
+  const debouncedSearch = useCallback(
+    debounce((searchValue: string) => {
+      if (searchValue !== searchTerm) {
+        updateURL({ search: searchValue });
+        setIsSearching(false);
+      }
+    }, 500),
+    [searchTerm, updateURL]
+  );
+
   useEffect(() => {
     if (localSearchTerm !== searchTerm) {
       setIsSearching(true);
+      debouncedSearch(localSearchTerm);
     }
-
-    const timer = setTimeout(() => {
-      if (localSearchTerm !== searchTerm) {
-        updateURL({ search: localSearchTerm });
-        setIsSearching(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [localSearchTerm, searchTerm, updateURL]);
+  }, [localSearchTerm, searchTerm, debouncedSearch]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalSearchTerm(e.target.value);
@@ -99,6 +98,7 @@ export default function PageHeader({
             placeholder={lang.search}
             value={localSearchTerm}
             onChange={handleSearchChange}
+            className={styles.searchInput}
           />
         </div>
 
@@ -131,9 +131,11 @@ export default function PageHeader({
             onChange={handleSortChange}
           >
             <option value="">{lang.sortBy}</option>
-            <option value="name">{lang.sortByName}</option>
-            <option value="price">{lang.sortByPrice}</option>
-            <option value="category">{lang.sortByCategory}</option>
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {lang[option.label]}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -144,8 +146,11 @@ export default function PageHeader({
               value={sortOrder}
               onChange={handleSortOrderChange}
             >
-              <option value="asc">{lang.sortAscending}</option>
-              <option value="desc">{lang.sortDescending}</option>
+              {SORT_ORDERS.map((order) => (
+                <option key={order.value} value={order.value}>
+                  {lang[order.label]}
+                </option>
+              ))}
             </select>
           </div>
         )}

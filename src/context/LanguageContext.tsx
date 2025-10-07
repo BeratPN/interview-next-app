@@ -1,49 +1,54 @@
-'use client';
-
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+"use client";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import trJson from '@/locales/tr.json';
 import enJson from '@/locales/en.json';
+import { Language, LanguageContextType } from '@/types';
+import { storage } from '@/utils';
 
-type Language = 'tr' | 'en';
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-interface LanguageContextProps {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  lang: Record<string, string>;
+const translations = {
+  tr: trJson,
+  en: enJson,
+};
+
+interface LanguageProviderProps {
+  children: ReactNode;
 }
 
-const tr: Record<string, string> = trJson as Record<string, string>;
-const en: Record<string, string> = enJson as Record<string, string>;
+export function LanguageProvider({ children }: LanguageProviderProps) {
+  const [language, setLanguageState] = useState<Language>('tr');
 
-const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
-
-export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguage] = useState<Language>('tr');
-  const lang = language === 'tr' ? tr : en;
-
-  const handleSetLanguage = (newLanguage: Language) => {
-    setLanguage(newLanguage);
-    localStorage.setItem('language', newLanguage);
-    document.documentElement.lang = newLanguage;
-  };
-
+  // Load language from localStorage on mount
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
-      document.documentElement.lang = savedLanguage;
-    }
+    const savedLanguage = storage.get<Language>('language', 'tr');
+    setLanguageState(savedLanguage);
+    document.documentElement.lang = savedLanguage;
   }, []);
 
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    storage.set('language', lang);
+    document.documentElement.lang = lang;
+  };
+
+  const value: LanguageContextType = {
+    language,
+    setLanguage,
+    lang: translations[language],
+  };
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, lang }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );
-};
+}
 
-export const useLanguage = () => {
+export function useLanguage() {
   const context = useContext(LanguageContext);
-  if (!context) throw new Error('useLanguage must be used within LanguageProvider');
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
   return context;
-};
+}

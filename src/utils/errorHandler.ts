@@ -1,9 +1,14 @@
-import { useLanguage } from '@/context/LanguageContext';
-
-export interface ApiError {
-  message: string;
+// API Error class
+export class ApiError extends Error {
   status?: number;
   code?: string;
+
+  constructor(message: string, status?: number, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
 }
 
 export class ApiErrorHandler {
@@ -65,9 +70,8 @@ export class ApiErrorHandler {
         throw error;
       }
       
-      // Network hatası
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new ApiError('Ağ bağlantısı hatası. İnternet bağlantınızı kontrol edin.', 0);
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new ApiError('Ağ bağlantısı hatası', 0);
       }
       
       throw new ApiError('Beklenmeyen hata: ' + (error as Error).message, 0);
@@ -75,42 +79,16 @@ export class ApiErrorHandler {
   }
 }
 
-export class ApiError extends Error implements ApiError {
-  status?: number;
-  code?: string;
-
-  constructor(message: string, status?: number, code?: string) {
-    super(message);
-    this.name = 'ApiError';
-    this.status = status;
-    this.code = code;
-  }
-}
-
-export function showErrorToast(error: ApiError, lang: any) {
+export function showErrorToast(error: ApiError, lang: Record<string, string>) {
   const message = error.message || lang.networkError || 'Bir hata oluştu';
   
-  // Basit toast notification (gerçek projede react-toastify gibi kütüphane kullanılabilir)
-  const toast = document.createElement('div');
-  toast.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #ef4444;
-    color: white;
-    padding: 1rem 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 10000;
-    max-width: 400px;
-    font-size: 0.875rem;
-    line-height: 1.4;
-  `;
-  toast.textContent = message;
+  // Basit alert fallback (gerçek uygulamada toast library kullanılmalı)
+  alert(message);
   
-  document.body.appendChild(toast);
-  
-  setTimeout(() => {
-    toast.remove();
-  }, 5000);
+  // Console'a da logla
+  console.error('API Error:', {
+    message: error.message,
+    status: error.status,
+    code: error.code,
+  });
 }

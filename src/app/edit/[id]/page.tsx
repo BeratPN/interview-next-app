@@ -1,6 +1,7 @@
 "use client";
 
-import ProductForm, { Product } from "@/components/ProductForm";
+import ProductForm from "@/components/ProductForm";
+import { Product } from "@/types";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";

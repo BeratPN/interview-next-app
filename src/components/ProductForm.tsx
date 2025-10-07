@@ -2,27 +2,16 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import styles from "./ProductForm.module.scss";
 import { useLanguage } from "@/context/LanguageContext";
 import { ApiErrorHandler, showErrorToast } from "@/utils/errorHandler";
-
-export interface Product {
-  id?: string | number;
-  name: string;
-  category: string;
-  price: number;
-  description?: string;
-  image?: string;
-  brand: string;
-  model: string;
-  color: string;
-  stock: number;
-}
-
-type Mode = "add" | "edit";
+import { Product, FormMode, FormErrors } from "@/types";
+import { validateProduct, formatPrice, validateFile, BLUR_DATA_URL } from "@/utils";
+import { APP_CONFIG, PRODUCT_CATEGORIES } from "@/constants";
 
 interface ProductFormProps {
-  mode?: Mode;
+  mode?: FormMode;
   initialData?: Product;
   categories?: string[];
   apiEndpoint?: string;
@@ -33,7 +22,7 @@ interface ProductFormProps {
 export default function ProductForm({
   mode = "add",
   initialData,
-  categories = ["Mobilya", "Dekorasyon", "Aydınlatma", "Giyim", "Elektronik"],
+  categories = PRODUCT_CATEGORIES,
   apiEndpoint,
   onSuccess,
   onCancel,
@@ -41,6 +30,7 @@ export default function ProductForm({
   const { lang } = useLanguage();
   const router = useRouter();
 
+  // Form state
   const [form, setForm] = useState<Product>({
     name: "",
     category: categories[0] || "",
@@ -54,7 +44,7 @@ export default function ProductForm({
     ...initialData,
   });
 
-  // ayrı bir string state input için
+  // Input states for controlled inputs
   const [priceInput, setPriceInput] = useState<string>(
     initialData?.price?.toString() || ""
   );
@@ -62,176 +52,166 @@ export default function ProductForm({
     initialData?.stock?.toString() || ""
   );
 
+  // File and preview states
   const [file, setFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(
     initialData?.image ?? null
   );
+
+  // UI states
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Initialize form when initialData changes
   useEffect(() => {
     if (initialData) {
-      setForm((s) => ({ ...s, ...initialData }));
+      setForm((prev) => ({ ...prev, ...initialData }));
       setPriceInput(initialData.price.toString());
       setStockInput(initialData.stock.toString());
       setImagePreview(initialData.image ?? null);
     }
   }, [initialData]);
 
+  // Helper function to update form fields
   const setField = <K extends keyof Product>(key: K, value: Product[K]) => {
-    setForm((s) => ({ ...s, [key]: value }));
+    setForm((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => ({ ...prev, [String(key)]: "" }));
   };
 
-  const handleFile = (f: File | null) => {
-    setFile(f);
-    if (f) {
-      setImagePreview(URL.createObjectURL(f));
+  // File handling
+  const handleFile = (selectedFile: File | null) => {
+    setFile(selectedFile);
+    if (selectedFile) {
+      const validationError = validateFile(selectedFile);
+      if (validationError) {
+        setErrors((prev) => ({ ...prev, image: validationError }));
+        return;
+      }
+      setImagePreview(URL.createObjectURL(selectedFile));
       setField("image", "");
     } else {
       setImagePreview(initialData?.image ?? null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] ?? null;
-    handleFile(f);
+    const selectedFile = e.target.files?.[0] ?? null;
+    handleFile(selectedFile);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const f = e.dataTransfer.files?.[0] ?? null;
-    if (f) handleFile(f);
-  };
-
-  const validate = () => {
-    const errs: Record<string, string> = {};
-    
-    // Temel alanlar
-    if (!form.name?.trim()) errs.name = lang.productNameError;
-    if (form.price <= 0 || Number.isNaN(form.price)) errs.price = lang.productPriceError;
-    if (!form.category) errs.category = lang.productCategoryError;
-    
-    // Yeni alanlar
-    if (!form.brand?.trim()) errs.brand = lang.brandError;
-    if (!form.model?.trim()) errs.model = lang.modelError;
-    if (!form.color?.trim()) errs.color = lang.colorError;
-    
-    // Stok validasyonu
-    if (Number.isNaN(form.stock) || form.stock < 0) {
-      errs.stock = lang.stockError;
-    } else if (form.stock === 0) {
-      errs.stock = lang.stockMinError;
-    } else if (form.stock > 999999) {
-      errs.stock = lang.stockMaxError;
+    const selectedFile = e.dataTransfer.files?.[0] ?? null;
+    if (selectedFile) {
+      handleFile(selectedFile);
     }
-    
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
   };
 
+  // Price input handling
+  const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/[^0-9.,]/g, "");
+    value = value.replace(",", ".");
+    setPriceInput(value);
+    setField("price", value === "" ? 0 : parseFloat(value));
+  };
+
+  // Stock input handling
+  const handleStockInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    if (/^\d*$/.test(value) || value === "") {
+      setStockInput(value);
+      setField("stock", value === "" ? 0 : parseInt(value));
+    }
+  };
+
+  // Form validation
+  const validate = (): boolean => {
+    const validationErrors = validateProduct(form, lang);
+    setErrors(validationErrors);
+    return Object.keys(validationErrors).length === 0;
+  };
+
+  // Form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    
+    if (!validate()) {
+      return;
+    }
 
     setLoading(true);
 
     try {
-      let uploadedUrl = form.image;
+      let imageUrl = form.image;
 
-      // Dosya varsa upload et
+      // Upload file if exists
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
-
-        const res = await fetch("/api/upload", {
+        
+        const uploadResponse = await ApiErrorHandler.handleFetch("/api/upload", {
           method: "POST",
           body: formData,
         });
-        const data = await res.json();
-        uploadedUrl = data.url ?? "";
-
-        if (!uploadedUrl) {
-          alert(lang.failedToUploadImage);
-          setLoading(false);
-          return;
-        }
+        
+        imageUrl = uploadResponse.url;
       }
 
-      const productData: Product = { ...form, image: uploadedUrl };
+      // Prepare product data
+      const productData = {
+        ...form,
+        image: imageUrl,
+        price: parseFloat(priceInput) || 0,
+        stock: parseInt(stockInput) || 0,
+      };
 
-      if (mode === "edit" && initialData?.id) {
-        // Güncelleme işlemi
-        await ApiErrorHandler.handleFetch(`/api/products/${initialData.id}`, {
-          method: "PUT",
-          body: JSON.stringify(productData),
-        });
-      } else {
-        // Yeni ürün ekleme
-        await ApiErrorHandler.handleFetch("/api/products", {
-          method: "POST",
-          body: JSON.stringify(productData),
-        });
-      }
+      // Determine API endpoint
+      const endpoint = apiEndpoint || 
+        (mode === "add" ? "/api/products" : `/api/products/${initialData?.id}`);
 
-      setForm({
-        name: "",
-        category: categories[0] || "",
-        price: 0,
-        description: "",
-        image: "",
-        brand: "",
-        model: "",
-        color: "",
-        stock: 0,
+      // Submit product
+      await ApiErrorHandler.handleFetch(endpoint, {
+        method: mode === "add" ? "POST" : "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(productData),
       });
+
+      onSuccess?.(productData);
+      
+      // Reset form
       setPriceInput("");
       setStockInput("");
-      setFile(null);
-      setImagePreview(null);
-      onSuccess?.(productData);
-      mode === "edit" ? alert(lang.productUpdated) : alert(lang.productSaved);
-      router.push("/");
+      
+      // Navigate or call success callback
+      if (!onSuccess) {
+        setTimeout(() => router.push("/"), 100);
+      }
     } catch (err: any) {
       console.error("Form error:", err);
       showErrorToast(err, lang);
     } finally {
       setLoading(false);
-      setTimeout(() => router.push("/"), 100); // hala yönlendirme yapmazsa diye
     }
   };
 
-  const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    value = value.replace(",", ".");
-
-    // sadece geçerli float formatına izin ver
-    if (/^\d*\.?\d*$/.test(value) || value === "") {
-      setPriceInput(value);
-      setField("price", value === "" ? 0 : parseFloat(value)); // number olarak kaydet
-    }
-  };
-
-  const handleStockInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-
-    // sadece geçerli integer formatına izin ver
-    if (/^\d*$/.test(value) || value === "") {
-      setStockInput(value);
-      setField("stock", value === "" ? 0 : parseInt(value)); // number olarak kaydet
-    }
-  };
-
+  // Cancel handler
   const handleCancel = () => {
-    onCancel?.();
-    router.push("/");
+    if (onCancel) {
+      onCancel();
+    } else {
+      router.push("/");
+    }
   };
 
   return (
-    <div className={styles.wrapper}>
-      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+    <div className={styles.formContainer}>
+      <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.grid}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="product-name">
@@ -378,23 +358,28 @@ export default function ProductForm({
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="category">
-            {lang.category}
+            {lang.productCategory}
+            <span className={styles.required}>*</span>
           </label>
           <select
             id="category"
+            name="category"
+            className={styles.select}
             value={form.category}
             onChange={(e) => setField("category", e.target.value)}
-            className={styles.select}
+            aria-invalid={!!errors.category}
+            aria-describedby={errors.category ? "error-category" : undefined}
           >
-            <option value="">{lang.selectCategory}</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
               </option>
             ))}
           </select>
           {errors.category && (
-            <div className={styles.error}>{errors.category}</div>
+            <div id="error-category" className={styles.error}>
+              {errors.category}
+            </div>
           )}
         </div>
 
@@ -449,7 +434,7 @@ export default function ProductForm({
                 ref={fileInputRef}
                 className={styles.srOnly}
                 type="file"
-                accept="image/png,image/jpeg,image/jpg,image/gif"
+                accept={APP_CONFIG.IMAGES.ALLOWED_TYPES.join(",")}
                 onChange={handleFileChange}
               />
               <p className={styles.small}>{lang.allowedFormats}</p>
@@ -457,10 +442,19 @@ export default function ProductForm({
 
             {imagePreview && (
               <div className={styles.preview}>
-                <img
+                <Image
                   src={imagePreview}
                   alt="Önizleme"
                   className={styles.previewImg}
+                  width={APP_CONFIG.IMAGES.PREVIEW_SIZE}
+                  height={APP_CONFIG.IMAGES.PREVIEW_SIZE}
+                  loading="lazy"
+                  placeholder="blur"
+                  blurDataURL={BLUR_DATA_URL}
+                  style={{
+                    objectFit: 'cover',
+                    borderRadius: '0.375rem'
+                  }}
                 />
                 <button
                   type="button"
@@ -472,6 +466,11 @@ export default function ProductForm({
               </div>
             )}
           </div>
+          {errors.image && (
+            <div className={styles.error}>
+              {errors.image}
+            </div>
+          )}
         </div>
 
         <div className={styles.actions}>
