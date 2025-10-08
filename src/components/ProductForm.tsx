@@ -76,7 +76,18 @@ export default function ProductForm({
   // Helper function to update form fields
   const setField = <K extends keyof Product>(key: K, value: Product[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+    // Hata mesajını temizle
     setErrors((prev) => ({ ...prev, [String(key)]: "" }));
+  };
+
+  // Real-time validation for individual fields
+  const validateField = <K extends keyof Product>(key: K, value: Product[K]) => {
+    const fieldErrors = validateProduct({ [key]: value }, lang);
+    if (fieldErrors[key]) {
+      setErrors((prev) => ({ ...prev, [String(key)]: fieldErrors[key] }));
+    } else {
+      setErrors((prev) => ({ ...prev, [String(key)]: "" }));
+    }
   };
 
   // File handling
@@ -116,7 +127,12 @@ export default function ProductForm({
     let value = e.target.value.replace(/[^0-9.,]/g, "");
     value = value.replace(",", ".");
     setPriceInput(value);
-    setField("price", value === "" ? 0 : parseFloat(value));
+    const priceValue = value === "" ? 0 : parseFloat(value);
+    setField("price", priceValue);
+  };
+
+  const handlePriceBlur = () => {
+    validateField("price", form.price);
   };
 
   // Stock input handling
@@ -124,8 +140,13 @@ export default function ProductForm({
     let value = e.target.value;
     if (/^\d*$/.test(value) || value === "") {
       setStockInput(value);
-      setField("stock", value === "" ? 0 : parseInt(value));
+      const stockValue = value === "" ? 0 : parseInt(value);
+      setField("stock", stockValue);
     }
+  };
+
+  const handleStockBlur = () => {
+    validateField("stock", form.stock);
   };
 
   // Form validation
@@ -226,6 +247,7 @@ export default function ProductForm({
               placeholder={lang.productNamePlaceholder}
               value={form.name}
               onChange={(e) => setField("name", e.target.value)}
+              onBlur={() => validateField("name", form.name)}
               aria-invalid={!!errors.name}
               aria-describedby={errors.name ? "error-name" : undefined}
             />
@@ -249,6 +271,7 @@ export default function ProductForm({
               placeholder={lang.brandPlaceholder}
               value={form.brand}
               onChange={(e) => setField("brand", e.target.value)}
+              onBlur={() => validateField("brand", form.brand)}
               aria-invalid={!!errors.brand}
               aria-describedby={errors.brand ? "error-brand" : undefined}
             />
@@ -274,6 +297,7 @@ export default function ProductForm({
               placeholder={lang.modelPlaceholder}
               value={form.model}
               onChange={(e) => setField("model", e.target.value)}
+              onBlur={() => validateField("model", form.model)}
               aria-invalid={!!errors.model}
               aria-describedby={errors.model ? "error-model" : undefined}
             />
@@ -297,6 +321,7 @@ export default function ProductForm({
               placeholder={lang.productPricePlaceholder}
               value={priceInput}
               onChange={handlePriceInput}
+              onBlur={handlePriceBlur}
               aria-invalid={!!errors.price}
               aria-describedby={errors.price ? "error-price" : undefined}
             />
@@ -322,6 +347,7 @@ export default function ProductForm({
               placeholder={lang.colorPlaceholder}
               value={form.color}
               onChange={(e) => setField("color", e.target.value)}
+              onBlur={() => validateField("color", form.color)}
               aria-invalid={!!errors.color}
               aria-describedby={errors.color ? "error-color" : undefined}
             />
@@ -345,6 +371,7 @@ export default function ProductForm({
               placeholder={lang.stockPlaceholder}
               value={stockInput}
               onChange={handleStockInput}
+              onBlur={handleStockBlur}
               aria-invalid={!!errors.stock}
               aria-describedby={errors.stock ? "error-stock" : undefined}
             />
@@ -367,6 +394,7 @@ export default function ProductForm({
             className={styles.select}
             value={form.category}
             onChange={(e) => setField("category", e.target.value)}
+            onBlur={() => validateField("category", form.category)}
             aria-invalid={!!errors.category}
             aria-describedby={errors.category ? "error-category" : undefined}
           >
