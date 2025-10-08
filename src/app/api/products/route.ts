@@ -2,6 +2,22 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
+// Cache için basit in-memory cache
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 dakika
+
+function getCachedData(key: string) {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  return null;
+}
+
+function setCachedData(key: string, data: any) {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,11 +27,27 @@ export async function GET(req: Request) {
     const sortBy = searchParams.get('sortBy') || '';
     const sortOrder = searchParams.get('sortOrder') || 'asc';
 
+    // Cache key oluştur
+    const cacheKey = `products_${page}_${limit}_${search}_${sortBy}_${sortOrder}`;
+    
+    // Cache'den kontrol et
+    const cachedData = getCachedData(cacheKey);
+    if (cachedData) {
+      return NextResponse.json(cachedData, {
+        headers: {
+          'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 dakika cache
+          'X-Cache': 'HIT'
+        }
+      });
+    }
+
     const dataDir = path.join(process.cwd(), "data");
     const filePath = path.join(dataDir, "products.json");
 
     if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ products: [], totalPages: 0, currentPage: 1, totalProducts: 0 });
+      const emptyResult = { products: [], totalPages: 0, currentPage: 1, totalProducts: 0 };
+      setCachedData(cacheKey, emptyResult);
+      return NextResponse.json(emptyResult);
     }
 
     let products = JSON.parse(fs.readFileSync(filePath, "utf-8"));
@@ -68,13 +100,23 @@ export async function GET(req: Request) {
     const endIndex = startIndex + limit;
     const paginatedProducts = products.slice(startIndex, endIndex);
 
-    return NextResponse.json({
+    const result = {
       products: paginatedProducts,
       totalPages,
       currentPage: page,
       totalProducts,
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1
+    };
+
+    // Cache'e kaydet
+    setCachedData(cacheKey, result);
+
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 dakika cache
+        'X-Cache': 'MISS'
+      }
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Ürünler getirilemedi" }, { status: 500 });
@@ -100,6 +142,9 @@ export async function POST(req: Request) {
 
     products.push(newProduct);
     fs.writeFileSync(filePath, JSON.stringify(products, null, 2));
+
+    // Cache'i temizle
+    cache.clear();
 
     return NextResponse.json({ success: true, product: newProduct });
   } catch (err: any) {

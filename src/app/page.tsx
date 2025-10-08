@@ -2,17 +2,7 @@ import PageHeader from "../components/PageHeader";
 import ProductTable from "../components/ProductTable";
 import FloatingButtonWrapper from "@/components/FloatingButtonWrapper";
 import styles from "./page.module.scss";
-
-interface SearchParams {
-  page?: string;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: string;
-}
-
-interface HomeProps {
-  searchParams: SearchParams;
-}
+import { SearchParams, HomeProps } from "@/types";
 
 async function getProducts(searchParams: SearchParams) {
   const params = new URLSearchParams();
@@ -26,7 +16,10 @@ async function getProducts(searchParams: SearchParams) {
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const response = await fetch(`${baseUrl}/api/products?${params.toString()}`, {
-    cache: 'no-store'
+    next: { 
+      revalidate: 300, // 5 dakika cache
+      tags: ['products']
+    }
   });
 
   if (!response.ok) {
