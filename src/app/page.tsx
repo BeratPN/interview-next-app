@@ -14,13 +14,9 @@ async function getProducts(searchParams: SearchParams) {
   
   params.append('limit', '10');
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const response = await fetch(`${baseUrl}/api/products?${params.toString()}`, {
-    next: { 
-      revalidate: process.env.NODE_ENV === 'production' ? 300 : 0, // Production'da 5 dakika cache
-      tags: ['products']
-    }
-  });
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+    (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
+  const response = await fetch(`${baseUrl}/api/products?${params.toString()}`);
 
   if (!response.ok) {
     throw new Error('Failed to fetch products');

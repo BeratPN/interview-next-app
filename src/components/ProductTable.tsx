@@ -5,7 +5,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import ProductRow from "./ProductRow";
 import Pagination from "./Pagination";
 import ConfirmModal from "./ConfirmModal";
-import { ApiErrorHandler, showErrorToast } from "@/utils/errorHandler";
+// Removed ApiErrorHandler import - using direct fetch instead
 import { ProductTableProps } from "@/types";
 import { formatNumber } from "@/utils";
 import styles from "./ProductTable.module.scss";
@@ -35,22 +35,24 @@ export default function ProductTable({
     if (!deleteModal.productId) return;
     
     try {
-      await ApiErrorHandler.handleFetch(`/api/products/${deleteModal.productId}`, {
+      const response = await fetch(`/api/products/${deleteModal.productId}`, {
         method: "DELETE"
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Silme işlemi başarısız');
+      }
       
       // Modal'ı kapat
       setDeleteModal({ isOpen: false, productId: null, productName: '' });
       
-      // Sayfayı yenile - revalidateTag sayesinde fresh data gelecek
-      router.refresh();
-      
-      // Alternatif: Eğer router.refresh() yeterli değilse
-      // window.location.reload();
+      // Sayfayı yenile
+      window.location.reload();
       
     } catch (err: any) {
       console.error("Delete error:", err);
-      showErrorToast(err, lang);
+      alert(err.message || 'Silme işlemi başarısız');
     }
   };
 

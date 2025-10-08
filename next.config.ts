@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Body size limit is handled by Next.js automatically in App Router
 };
 
 export default nextConfig;

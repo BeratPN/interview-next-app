@@ -55,7 +55,10 @@ export class ApiErrorHandler {
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Content-Type': 'application/json',
+          // Content-Type'ı sadece JSON istekleri için ekle
+          ...(options.body && typeof options.body === 'string' && !options.body.includes('FormData') 
+            ? { 'Content-Type': 'application/json' } 
+            : {}),
           ...options.headers,
         },
       });

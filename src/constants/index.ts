@@ -15,7 +15,7 @@ export const APP_CONFIG = {
     MIN_PRICE: 0.01,
   },
   IMAGES: {
-    MAX_SIZE: 5 * 1024 * 1024, // 5MB
+    MAX_SIZE: 10 * 1024 * 1024, // 10MB
     ALLOWED_TYPES: ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'],
     PLACEHOLDER_SIZE: 60,
     PREVIEW_SIZE: 200,

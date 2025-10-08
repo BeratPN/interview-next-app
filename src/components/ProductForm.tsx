@@ -62,6 +62,7 @@ export default function ProductForm({
   // UI states
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Initialize form when initialData changes
@@ -161,26 +162,32 @@ export default function ProductForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validate()) {
-      return;
-    }
-
-    setLoading(true);
+    if (isSaving) return;
+    setIsSaving(true);
 
     try {
       let imageUrl = form.image;
 
       // Upload file if exists
       if (file) {
+        console.log(`Uploading file: ${file.name}, size: ${file.size} bytes`);
+        
         const formData = new FormData();
         formData.append("file", file);
         
-        const uploadResponse = await ApiErrorHandler.handleFetch("/api/upload", {
+        const uploadResponse = await fetch("/api/upload", {
           method: "POST",
           body: formData,
         });
         
-        imageUrl = uploadResponse.url;
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.error || "Upload hatası");
+        }
+        
+        const uploadData = await uploadResponse.json();
+        imageUrl = uploadData.url;
+        console.log(`File uploaded successfully: ${imageUrl}`);
       }
 
       // Prepare product data
@@ -216,9 +223,20 @@ export default function ProductForm({
       }
     } catch (err: any) {
       console.error("Form error:", err);
-      showErrorToast(err, lang);
+      
+      // Daha detaylı hata mesajları
+      if (err.status === 400) {
+        showErrorToast(new Error("Geçersiz veri. Lütfen tüm alanları kontrol edin."), lang);
+      } else if (err.status === 413) {
+        showErrorToast(new Error("Dosya boyutu çok büyük. Lütfen daha küçük bir dosya seçin."), lang);
+      } else if (err.status === 500) {
+        showErrorToast(new Error("Sunucu hatası. Lütfen tekrar deneyin."), lang);
+      } else {
+        showErrorToast(err, lang);
+      }
     } finally {
       setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -451,13 +469,15 @@ export default function ProductForm({
             </div>
 
             <div className={styles.uploadText}>
+              <h3>{lang.uploadImageTitle}</h3>
+              <p>{lang.uploadImageDescription}</p>
               <label
                 className={styles.uploadButton}
                 onClick={() => fileInputRef.current?.click()}
                 role="button"
                 tabIndex={0}
               >
-                <span>{lang.upoadImage}</span>
+                <span>{lang.selectFile}</span>
               </label>
               <input
                 ref={fileInputRef}
@@ -490,7 +510,7 @@ export default function ProductForm({
                   className={styles.remove}
                   onClick={() => handleFile(null)}
                 >
-                  {lang.remove}
+                  {lang.removeImage}
                 </button>
               </div>
             )}
@@ -511,8 +531,8 @@ export default function ProductForm({
           >
             {lang.cancel}
           </button>
-          <button type="submit" className={styles.save} disabled={loading}>
-            {loading ? lang.saving : mode === "add" ? lang.save : lang.update}
+          <button type="submit" className={styles.save} disabled={loading || isSaving}>
+            {loading || isSaving ? lang.saving : mode === "add" ? lang.save : lang.update}
           </button>
         </div>
       </form>

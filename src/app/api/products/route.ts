@@ -1,43 +1,8 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
-import fs from "fs";
+import fs from "fs/promises";
 import path from "path";
 
-// Cache için basit in-memory cache
-export const cache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 5 * 60 * 1000; // 5 dakika
-
-function getCachedData(key: string) {
-  const cached = cache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    return cached.data;
-  }
-  return null;
-}
-
-function setCachedData(key: string, data: any) {
-  cache.set(key, { data, timestamp: Date.now() });
-}
-
-// Products cache'ini temizle
-export function clearProductsCache() {
-  // Sadece products ile ilgili cache'leri temizle
-  const keysToDelete = [];
-  for (const key of cache.keys()) {
-    if (key.startsWith('products_')) {
-      keysToDelete.push(key);
-    }
-  }
-  
-  keysToDelete.forEach(key => cache.delete(key));
-  console.log(`Cleared ${keysToDelete.length} product cache entries`);
-}
-
-// Tüm cache'i temizle (eski fonksiyon)
-export function clearAllCache() {
-  cache.clear();
-  console.log("All cache cleared");
-}
+const DATA_PATH = path.join(process.cwd(), "data", "products.json");
 
 export async function GET(req: Request) {
   try {
@@ -48,99 +13,62 @@ export async function GET(req: Request) {
     const sortBy = searchParams.get('sortBy') || '';
     const sortOrder = searchParams.get('sortOrder') || 'asc';
 
-    // Cache key oluştur
-    const cacheKey = `products_${page}_${limit}_${search}_${sortBy}_${sortOrder}`;
-    
-    // Cache'den kontrol et
-    const cachedData = getCachedData(cacheKey);
-    if (cachedData) {
-      return NextResponse.json(cachedData, {
-        headers: {
-          'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 dakika cache
-          'X-Cache': 'HIT'
-        }
-      });
+    // Read products
+    const raw = await fs.readFile(DATA_PATH, "utf8").catch(() => "[]");
+    let products = [];
+    try {
+      products = JSON.parse(raw || "[]");
+    } catch (e) {
+      products = [];
     }
 
-    const dataDir = path.join(process.cwd(), "data");
-    const filePath = path.join(dataDir, "products.json");
-
-    if (!fs.existsSync(filePath)) {
-      const emptyResult = { products: [], totalPages: 0, currentPage: 1, totalProducts: 0 };
-      setCachedData(cacheKey, emptyResult);
-      return NextResponse.json(emptyResult);
-    }
-
-    let products = JSON.parse(fs.readFileSync(filePath, "utf-8"));
-
-    // Arama filtresi
+    // Search
+    let filteredProducts = products;
     if (search) {
-      products = products.filter((product: any) =>
-        product.name.toLowerCase().includes(search.toLowerCase()) ||
-        product.category.toLowerCase().includes(search.toLowerCase()) ||
-        product.price.toString().includes(search)
+      const lowerCaseSearch = search.toLowerCase();
+      filteredProducts = products.filter((p: any) =>
+        p.name?.toLowerCase().includes(lowerCaseSearch) ||
+        p.description?.toLowerCase().includes(lowerCaseSearch) ||
+        p.category?.toLowerCase().includes(lowerCaseSearch) ||
+        p.brand?.toLowerCase().includes(lowerCaseSearch) ||
+        p.model?.toLowerCase().includes(lowerCaseSearch) ||
+        p.color?.toLowerCase().includes(lowerCaseSearch)
       );
     }
 
-    // Sıralama
+    // Sort
     if (sortBy) {
-      products.sort((a: any, b: any) => {
-        let aValue: string | number;
-        let bValue: string | number;
+      filteredProducts.sort((a: any, b: any) => {
+        let valA = a[sortBy];
+        let valB = b[sortBy];
 
-        switch (sortBy) {
-          case 'name':
-            aValue = a.name.toLowerCase();
-            bValue = b.name.toLowerCase();
-            break;
-          case 'price':
-            aValue = a.price;
-            bValue = b.price;
-            break;
-          case 'category':
-            aValue = a.category.toLowerCase();
-            bValue = b.category.toLowerCase();
-            break;
-          default:
-            return 0;
-        }
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
 
-        if (aValue < bValue) {
-          return sortOrder === 'asc' ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortOrder === 'asc' ? 1 : -1;
-        }
+        if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+        if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
         return 0;
       });
     }
 
-    const totalProducts = products.length;
+    // Pagination
+    const totalProducts = filteredProducts.length;
     const totalPages = Math.ceil(totalProducts / limit);
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    const paginatedProducts = products.slice(startIndex, endIndex);
+    const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
 
-    const result = {
+    return NextResponse.json({
       products: paginatedProducts,
       totalPages,
       currentPage: page,
       totalProducts,
       hasNextPage: page < totalPages,
       hasPrevPage: page > 1
-    };
-
-    // Cache'e kaydet
-    setCachedData(cacheKey, result);
-
-    return NextResponse.json(result, {
-      headers: {
-        'Cache-Control': 'public, max-age=300, s-maxage=300', // 5 dakika cache
-        'X-Cache': 'MISS'
-      }
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Ürünler getirilemedi" }, { status: 500 });
+  } catch (err) {
+    console.error("GET /api/products error:", err);
+    return NextResponse.json({ error: "Ürünler getirilemedi" }, { status: 500 });
   }
 }
 
@@ -148,30 +76,25 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const dataDir = path.join(process.cwd(), "data");
-    fs.mkdirSync(dataDir, { recursive: true });
+    // read file (if missing, start with [])
+    const raw = await fs.readFile(DATA_PATH, "utf8").catch(() => "[]");
+    let products = [];
+    try {
+      products = JSON.parse(raw || "[]");
+    } catch (e) {
+      products = [];
+    }
 
-    const filePath = path.join(dataDir, "products.json");
-
-    const products = fs.existsSync(filePath)
-      ? JSON.parse(fs.readFileSync(filePath, "utf-8"))
-      : [];
-
-    // id atama
-    const newId = products.length ? Number(products[products.length - 1].id) + 1 : 1;
-    const newProduct = { id: newId, ...body };
+    // generate id server-side
+    const newId = (products?.length ?? 0) + 1;
+    const newProduct = { ...body, id: newId }; // server id wins
 
     products.push(newProduct);
-    fs.writeFileSync(filePath, JSON.stringify(products, null, 2));
+    await fs.writeFile(DATA_PATH, JSON.stringify(products, null, 2), "utf8");
 
-    // Cache'i temizle
-    clearProductsCache();
-    
-    // Next.js cache tag'ini revalidate et
-    revalidateTag('products');
-
-    return NextResponse.json({ success: true, product: newProduct });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Ürün kaydedilemedi" }, { status: 500 });
+    return NextResponse.json(newProduct, { status: 201 });
+  } catch (err) {
+    console.error("POST /api/products error:", err);
+    return NextResponse.json({ error: "Sunucu hatası" }, { status: 500 });
   }
 }
