@@ -17,7 +17,7 @@ async function getProducts(searchParams: SearchParams) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
   const response = await fetch(`${baseUrl}/api/products?${params.toString()}`, {
     next: { 
-      revalidate: 300, // 5 dakika cache
+      revalidate: process.env.NODE_ENV === 'production' ? 300 : 0, // Production'da 5 dakika cache
       tags: ['products']
     }
   });

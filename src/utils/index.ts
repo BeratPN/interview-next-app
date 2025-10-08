@@ -59,7 +59,7 @@ export const formatNumber = (num: number, locale: string = 'tr-TR'): string => {
 
 // File validation
 export const validateFile = (file: File): string | null => {
-  if (!APP_CONFIG.IMAGES.ALLOWED_TYPES.includes(file.type)) {
+  if (!APP_CONFIG.IMAGES.ALLOWED_TYPES.includes(file.type as any)) {
     return 'Geçersiz dosya formatı';
   }
   

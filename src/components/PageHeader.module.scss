@@ -14,9 +14,13 @@
 
   .controls {
     display: flex;
-    gap: 0.5rem;
     align-items: center;
     transition: all 0.45s ease;
+    
+    // Elementler arası boşluk
+    > * + * {
+      margin-left: 0.5rem;
+    }
 
     .searchWrapper {
       display: flex;
@@ -174,7 +178,10 @@
     }
 
     .controls {
-      gap: 0.4rem;
+      // Elementler arası boşluk
+      > * + * {
+        margin-left: 0.4rem;
+      }
 
       .searchWrapper {
         svg {
@@ -223,7 +230,11 @@
     .controls {
       width: 100%;
       flex-direction: row;
-      gap: 0.5rem;
+      
+      // Elementler arası boşluk
+      > * + * {
+        margin-left: 0.5rem;
+      }
 
       .searchWrapper input {
         font-size: 0.8rem;

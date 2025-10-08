@@ -1,8 +1,10 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import ProductRow from "./ProductRow";
 import Pagination from "./Pagination";
+import ConfirmModal from "./ConfirmModal";
 import { ApiErrorHandler, showErrorToast } from "@/utils/errorHandler";
 import { ProductTableProps } from "@/types";
 import { formatNumber } from "@/utils";
@@ -19,17 +21,41 @@ export default function ProductTable({
   const { lang } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; productId: number | null; productName: string }>({
+    isOpen: false,
+    productId: null,
+    productName: ''
+  });
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteClick = (id: number, name: string) => {
+    setDeleteModal({ isOpen: true, productId: id, productName: name });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.productId) return;
+    
     try {
-      await ApiErrorHandler.handleFetch(`/api/products/${id}`, {
+      await ApiErrorHandler.handleFetch(`/api/products/${deleteModal.productId}`, {
         method: "DELETE"
       });
-      window.location.reload(); // Sayfayı yenile
+      
+      // Modal'ı kapat
+      setDeleteModal({ isOpen: false, productId: null, productName: '' });
+      
+      // Sayfayı yenile - revalidateTag sayesinde fresh data gelecek
+      router.refresh();
+      
+      // Alternatif: Eğer router.refresh() yeterli değilse
+      // window.location.reload();
+      
     } catch (err: any) {
       console.error("Delete error:", err);
       showErrorToast(err, lang);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, productId: null, productName: '' });
   };
 
   const handlePageChange = (page: number) => {
@@ -83,7 +109,7 @@ export default function ProductTable({
               model={product.model}
               color={product.color}
               stock={product.stock}
-              onDelete={() => handleDelete(product.id)}
+              onDelete={() => handleDeleteClick(product.id, product.name)}
             />
           ))}
         </tbody>
@@ -96,6 +122,15 @@ export default function ProductTable({
           onPageChange={handlePageChange}
           hasNextPage={hasNextPage}
           hasPrevPage={hasPrevPage}
+        />
+      )}
+
+      {deleteModal.isOpen && (
+        <ConfirmModal
+          isOpen={deleteModal.isOpen}
+          onClose={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+          message={`${lang.confirmDeleteMessage} "${deleteModal.productName}"?`}
         />
       )}
     </div>

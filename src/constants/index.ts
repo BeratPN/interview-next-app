@@ -43,8 +43,8 @@ export const SORT_OPTIONS = [
 ] as const;
 
 export const SORT_ORDERS = [
-  { value: 'asc', label: 'ascending' },
-  { value: 'desc', label: 'descending' },
+  { value: 'asc', label: 'sortAscending' },
+  { value: 'desc', label: 'sortDescending' },
 ] as const;
 
 export const API_ENDPOINTS = {

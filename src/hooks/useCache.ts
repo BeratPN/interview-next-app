@@ -34,11 +34,11 @@ export function useCache<T>(
   }, []);
 
   const fetchData = useCallback(async (force = false) => {
-    const cached = cache.get(key);
+    const cached = cache.get(key) as CacheItem<T> | undefined;
     
     // Cache'de var ve expire olmamışsa
     if (cached && !isExpired(cached) && !force) {
-      setData(cached.data);
+      setData(cached.data as T);
       
       // Stale ise background'da yenile
       if (isStale(cached)) {
@@ -75,7 +75,7 @@ export function useCache<T>(
       setError(err as Error);
       // Hata durumunda stale data varsa onu kullan
       if (cached && !isExpired(cached)) {
-        setData(cached.data);
+        setData(cached.data as T);
       }
     } finally {
       setLoading(false);

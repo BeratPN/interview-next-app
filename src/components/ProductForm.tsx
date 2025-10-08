@@ -22,7 +22,7 @@ interface ProductFormProps {
 export default function ProductForm({
   mode = "add",
   initialData,
-  categories = PRODUCT_CATEGORIES,
+  categories = [...PRODUCT_CATEGORIES],
   apiEndpoint,
   onSuccess,
   onCancel,
@@ -32,6 +32,7 @@ export default function ProductForm({
 
   // Form state
   const [form, setForm] = useState<Product>({
+    id: 0,
     name: "",
     category: categories[0] || "",
     price: 0,

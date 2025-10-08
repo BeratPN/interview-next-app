@@ -1,7 +1,9 @@
 // app/api/products/[id]/route.ts
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import fs from "fs";
 import path from "path";
+import { clearProductsCache } from "../route";
 
 const dataFile = path.join(process.cwd(), "data", "products.json");
 
@@ -37,6 +39,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (idx === -1) return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
     products[idx] = { ...products[idx], ...body, id: products[idx].id }; // id korunur
     writeProducts(products);
+    
+    // Cache'i temizle
+    clearProductsCache();
+    
+    // Next.js cache tag'ini revalidate et
+    revalidateTag('products');
+    
     return NextResponse.json(products[idx]);
   } catch (err: any) {
     console.error(err);
@@ -47,13 +56,29 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    console.log(`Attempting to delete product with ID: ${id}`);
+    
     const products = readProducts();
+    console.log(`Total products in file: ${products.length}`);
+    console.log(`Available IDs: ${products.map(p => p.id).join(', ')}`);
+    
     const idx = products.findIndex((x: any) => String(x.id) === String(id));
     if (idx === -1) {
-      return NextResponse.json({ error: "Ürün bulunamadı" }, { status: 404 });
+      console.log(`Product with ID ${id} not found`);
+      return NextResponse.json({ error: `Ürün bulunamadı (ID: ${id})` }, { status: 404 });
     }
+    
+    console.log(`Found product at index ${idx}, deleting...`);
     const removed = products.splice(idx, 1);
     writeProducts(products);
+    
+    // Cache'i temizle
+    clearProductsCache();
+    
+    // Next.js cache tag'ini revalidate et
+    revalidateTag('products');
+    
+    console.log(`Product deleted successfully: ${removed[0].name}`);
     return NextResponse.json({ success: true, removed: removed[0] });
   } catch (err: any) {
     console.error("DELETE error:", err);

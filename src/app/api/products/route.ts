@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import fs from "fs";
 import path from "path";
 
 // Cache için basit in-memory cache
-const cache = new Map<string, { data: any; timestamp: number }>();
+export const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION = 5 * 60 * 1000; // 5 dakika
 
 function getCachedData(key: string) {
@@ -16,6 +17,26 @@ function getCachedData(key: string) {
 
 function setCachedData(key: string, data: any) {
   cache.set(key, { data, timestamp: Date.now() });
+}
+
+// Products cache'ini temizle
+export function clearProductsCache() {
+  // Sadece products ile ilgili cache'leri temizle
+  const keysToDelete = [];
+  for (const key of cache.keys()) {
+    if (key.startsWith('products_')) {
+      keysToDelete.push(key);
+    }
+  }
+  
+  keysToDelete.forEach(key => cache.delete(key));
+  console.log(`Cleared ${keysToDelete.length} product cache entries`);
+}
+
+// Tüm cache'i temizle (eski fonksiyon)
+export function clearAllCache() {
+  cache.clear();
+  console.log("All cache cleared");
 }
 
 export async function GET(req: Request) {
@@ -144,7 +165,10 @@ export async function POST(req: Request) {
     fs.writeFileSync(filePath, JSON.stringify(products, null, 2));
 
     // Cache'i temizle
-    cache.clear();
+    clearProductsCache();
+    
+    // Next.js cache tag'ini revalidate et
+    revalidateTag('products');
 
     return NextResponse.json({ success: true, product: newProduct });
   } catch (err: any) {
